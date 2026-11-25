@@ -1,0 +1,458 @@
+[
+ {
+  "tc": "TC-01",
+  "title": "Login with a wrong password",
+  "action": "POST login.php with bad password",
+  "expected": "Rejected with 'Invalid username or password.'",
+  "actual": "Invalid username or password.",
+  "passed": true
+ },
+ {
+  "tc": "TC-02",
+  "title": "Deactivated account cannot log in",
+  "action": "Login as volunteer3 (is_active = 0)",
+  "expected": "Rejected: account is deactivated",
+  "actual": "This account is deactivated. Contact the coordinator.",
+  "passed": true
+ },
+ {
+  "tc": "TC-03",
+  "title": "Role-based redirect after login",
+  "action": "Login as coordinator, volunteer1 and donor1",
+  "expected": "Staff land on the dashboard, the donor on My Donations",
+  "actual": "coordinator -> dashboard.php, donor1 -> my_donations.php",
+  "passed": true
+ },
+ {
+  "tc": "TC-04",
+  "title": "Record a donation with quantity 0 (BR-01)",
+  "action": "Volunteer submits Record Donation with quantity 0",
+  "expected": "Rejected with 'Quantity must be greater than 0'; no row saved",
+  "actual": "Quantity must be greater than 0  (rows before/after: 16/16)",
+  "passed": true
+ },
+ {
+  "tc": "TC-05",
+  "title": "Future donation date (BR-05)",
+  "action": "Record donation dated 3 days from today",
+  "expected": "Rejected: date cannot be in the future; no row saved",
+  "actual": "Donation date cannot be in the future.",
+  "passed": true
+ },
+ {
+  "tc": "TC-06",
+  "title": "Inactive donor (BR-02)",
+  "action": "Record donation for inactive donor #9 (Pedro Villanueva)",
+  "expected": "Rejected with 'Donor/Category is inactive'; nothing saved",
+  "actual": "Donor/Category is inactive",
+  "passed": true
+ },
+ {
+  "tc": "TC-07",
+  "title": "Inactive category (BR-02)",
+  "action": "Record donation in inactive category #7 (Medical Supplies)",
+  "expected": "Rejected with 'Donor/Category is inactive'; nothing saved",
+  "actual": "Donor/Category is inactive",
+  "passed": true
+ },
+ {
+  "tc": "TC-08",
+  "title": "Record a valid donation (Create)",
+  "action": "Volunteer records 75.5 kg of rice from Juan dela Cruz",
+  "expected": "Saved with status RECORDED and recorded_by = volunteer1 (user 2)",
+  "actual": "17\t4\t1\t75.50\tRECORDED\t2",
+  "passed": true
+ },
+ {
+  "tc": "TC-09",
+  "title": "Filter donations by status",
+  "action": "Open Donations with status=VERIFIED",
+  "expected": "Exactly the VERIFIED donations: 4,6,9,13,14",
+  "actual": "4,6,9,13,14",
+  "passed": true
+ },
+ {
+  "tc": "TC-10",
+  "title": "Search donations by donor name",
+  "action": "Open Donations with q=rotary",
+  "expected": "Only Cebu Rotary Club donations: 1,10",
+  "actual": "1,10",
+  "passed": true
+ },
+ {
+  "tc": "TC-11",
+  "title": "Filter by category and date range",
+  "action": "Open Donations with category_id=2, from=2026-11-01, to=2026-11-30",
+  "expected": "Canned Goods in November: 10,15",
+  "actual": "10,15",
+  "passed": true
+ },
+ {
+  "tc": "TC-12",
+  "title": "Sort by quantity (descending)",
+  "action": "Open Donations with sort=quantity&dir=desc",
+  "expected": "Quantities appear in descending order",
+  "actual": "[300.0, 200.0, 200.0, 150.0, 120.0, 120.0, 100.0, 96.0]",
+  "passed": true
+ },
+ {
+  "tc": "TC-13",
+  "title": "Pagination",
+  "action": "Open Donations page 1 and page 2 (8 per page, 17 rows)",
+  "expected": "Page 1 has 8 rows and page 2 has 8 rows",
+  "actual": "page 1 = 8 rows, page 2 = 8 rows",
+  "passed": true
+ },
+ {
+  "tc": "TC-14",
+  "title": "SQL injection attempt in search box",
+  "action": "Search donor name for ' OR 1=1 -- ",
+  "expected": "Treated as plain text: no rows, no database error",
+  "actual": "HTTP 200, message: 'No donations match your filters.'",
+  "passed": true
+ },
+ {
+  "tc": "TC-15",
+  "title": "Coordinator verifies a RECORDED donation",
+  "action": "POST verify for donation #17",
+  "expected": "Status changes RECORDED -> VERIFIED",
+  "actual": "Donation #17 verified. (status = VERIFIED)",
+  "passed": true
+ },
+ {
+  "tc": "TC-16",
+  "title": "Distribute more than the remaining quantity (BR-04)",
+  "action": "Distribute 100 kg from donation #17 (75.5 kg available)",
+  "expected": "Rejected; remaining quantity and status unchanged",
+  "actual": "Quantity exceeds the remaining amount (75.5 left). Nothing was saved.\n   before (status, remaining): VERIFIED\t75.50 | after: VERIFIED\t75.50",
+  "passed": true
+ },
+ {
+  "tc": "TC-17",
+  "title": "Distribute a negative quantity (BR-01)",
+  "action": "Distribute -5 from donation #17",
+  "expected": "Rejected with 'Quantity must be greater than 0'",
+  "actual": "Quantity must be greater than 0",
+  "passed": true
+ },
+ {
+  "tc": "TC-18",
+  "title": "Distribution date earlier than donation date (BR-05)",
+  "action": "Distribute 20 kg dated 2020-01-01",
+  "expected": "Rejected with a date validation message",
+  "actual": "Distribution date cannot be earlier than the donation date (2026-11-19).",
+  "passed": true
+ },
+ {
+  "tc": "TC-19",
+  "title": "Partial distribution",
+  "action": "Distribute 30 of 75.5 kg",
+  "expected": "Distribution row saved; status VERIFIED -> PARTIAL; remaining 45.50",
+  "actual": "status = PARTIAL, remaining = 45.50",
+  "passed": true
+ },
+ {
+  "tc": "TC-20",
+  "title": "Final distribution reaches zero",
+  "action": "Distribute the remaining 45.5 kg",
+  "expected": "Status PARTIAL -> DISTRIBUTED; remaining 0.00",
+  "actual": "status = DISTRIBUTED, remaining = 0.00",
+  "passed": true
+ },
+ {
+  "tc": "TC-21",
+  "title": "Invalid status change (BR-03)",
+  "action": "Try to verify donation #17 which is already DISTRIBUTED",
+  "expected": "Rejected; status stays DISTRIBUTED",
+  "actual": "Invalid status change: DISTRIBUTED cannot become VERIFIED. (status = DISTRIBUTED)",
+  "passed": true
+ },
+ {
+  "tc": "TC-22",
+  "title": "Cancel requires a reason",
+  "action": "Cancel donation #11 with an empty reason",
+  "expected": "Rejected; status stays RECORDED",
+  "actual": "Enter a reason for cancelling.",
+  "passed": true
+ },
+ {
+  "tc": "TC-23",
+  "title": "Cancel a RECORDED donation with a reason",
+  "action": "Cancel donation #11 with a reason",
+  "expected": "Status RECORDED -> CANCELLED with the reason saved",
+  "actual": "CANCELLED\tDuplicate of donation #8 entry",
+  "passed": true
+ },
+ {
+  "tc": "TC-24",
+  "title": "A PARTIAL donation cannot be cancelled (BR-03)",
+  "action": "Cancel donation #2 (PARTIAL)",
+  "expected": "Rejected; status stays PARTIAL",
+  "actual": "Invalid status change: PARTIAL cannot become CANCELLED.",
+  "passed": true
+ },
+ {
+  "tc": "TC-25",
+  "title": "Delete a donor that has donations (BR-06)",
+  "action": "Delete donor #1 (Maria Santos, 2 donations)",
+  "expected": "Refused by the foreign key; message offers Cancel/Deactivate; donor still exists",
+  "actual": "This record is used by other records and cannot be deleted. Cancel or deactivate it instead. (donor rows: 1)",
+  "passed": true
+ },
+ {
+  "tc": "TC-26",
+  "title": "Delete a second donor that has a donation (BR-06)",
+  "action": "Delete donor #8 (Harmony Students Org, has donation #8)",
+  "expected": "Refused by foreign key; donor remains",
+  "actual": "This record is used by other records and cannot be deleted. Cancel or deactivate it instead.",
+  "passed": true
+ },
+ {
+  "tc": "TC-27",
+  "title": "Delete a donor with no donations",
+  "action": "Delete donor #9 (Pedro Villanueva)",
+  "expected": "Deleted successfully",
+  "actual": "Donor deleted. (rows left: 0)",
+  "passed": true
+ },
+ {
+  "tc": "TC-28",
+  "title": "Delete a donation that has distributions",
+  "action": "Delete donation #1 (DISTRIBUTED)",
+  "expected": "Refused (application check; the FOREIGN KEY also blocks it, see TC-56); donation remains",
+  "actual": "Only RECORDED donations can be deleted. Cancel this donation instead.",
+  "passed": true
+ },
+ {
+  "tc": "TC-29",
+  "title": "Delete a RECORDED donation (Delete)",
+  "action": "Delete donation #8 (RECORDED, no distributions)",
+  "expected": "Row removed",
+  "actual": "Donation #8 deleted. (rows left: 0)",
+  "passed": true
+ },
+ {
+  "tc": "TC-30",
+  "title": "Duplicate donor email is rejected",
+  "action": "Add two donors with email dup@example.com",
+  "expected": "Second save rejected: 'A donor with this email already exists.' (MySQL error 1062)",
+  "actual": "A donor with this email already exists.",
+  "passed": true
+ },
+ {
+  "tc": "TC-31",
+  "title": "Donor form validation",
+  "action": "Submit empty name and invalid email",
+  "expected": "Both fields rejected with messages",
+  "actual": "Donor name is required. Enter a valid email address.",
+  "passed": true
+ },
+ {
+  "tc": "TC-32",
+  "title": "Edit a donor (Update)",
+  "action": "Rename Test Donor A and change type to BUSINESS",
+  "expected": "Row updated in the database",
+  "actual": "Test Donor A (edited)\tBUSINESS\t032-000",
+  "passed": true
+ },
+ {
+  "tc": "TC-33",
+  "title": "Duplicate category name is rejected",
+  "action": "Add category 'Rice' again",
+  "expected": "Rejected: 'A category with this name already exists.'",
+  "actual": "A category with this name already exists.",
+  "passed": true
+ },
+ {
+  "tc": "TC-34",
+  "title": "Add a category (Create)",
+  "action": "Add 'Blankets' (pieces)",
+  "expected": "Row inserted",
+  "actual": "Blankets\tpieces\t1",
+  "passed": true
+ },
+ {
+  "tc": "TC-35",
+  "title": "Delete a category that has donations (BR-06)",
+  "action": "Delete category #1 (Rice)",
+  "expected": "Refused by foreign key; category remains",
+  "actual": "This record is used by other records and cannot be deleted. Cancel or deactivate it instead.",
+  "passed": true
+ },
+ {
+  "tc": "TC-36",
+  "title": "User form rejects a short password",
+  "action": "Create user with password 'short'",
+  "expected": "Rejected: at least 8 characters",
+  "actual": "Password must be at least 8 characters.",
+  "passed": true
+ },
+ {
+  "tc": "TC-37",
+  "title": "Create a user; password stored hashed",
+  "action": "Create volunteer9",
+  "expected": "Row inserted; password_hash is a bcrypt hash, not plain text",
+  "actual": "$2y$\t60",
+  "passed": true
+ },
+ {
+  "tc": "TC-38",
+  "title": "Duplicate username is rejected",
+  "action": "Create volunteer9 again",
+  "expected": "Rejected: 'That username is already taken.'",
+  "actual": "That username is already taken.",
+  "passed": true
+ },
+ {
+  "tc": "TC-39",
+  "title": "Category totals report",
+  "action": "Open Category Totals for 2026-10-01 to 2026-11-30",
+  "expected": "Received/Distributed/Remaining agree with a direct SQL query",
+  "actual": "Canned Goods on page = ['446', '210', '236']; SQL = Canned Goods | 446.00 | 210.00",
+  "passed": true
+ },
+ {
+  "tc": "TC-40",
+  "title": "Report rejects an invalid date range",
+  "action": "from=2026-12-01 to=2026-11-01",
+  "expected": "Error message; no totals shown",
+  "actual": "The \"from\" date cannot be later than the \"to\" date.",
+  "passed": true
+ },
+ {
+  "tc": "TC-41",
+  "title": "Volunteer cannot verify a donation (BR-08)",
+  "action": "Volunteer POSTs verify for RECORDED donation #15",
+  "expected": "HTTP 403 'Access denied' and status unchanged",
+  "actual": "HTTP 403, status = RECORDED",
+  "passed": true
+ },
+ {
+  "tc": "TC-42",
+  "title": "Volunteer cannot distribute (BR-08)",
+  "action": "Volunteer POSTs distribute for VERIFIED donation #14",
+  "expected": "HTTP 403 and no distribution row",
+  "actual": "HTTP 403",
+  "passed": true
+ },
+ {
+  "tc": "TC-43",
+  "title": "Volunteer cannot cancel a donation (BR-08)",
+  "action": "Volunteer POSTs cancel for VERIFIED donation #6",
+  "expected": "HTTP 403 and status unchanged",
+  "actual": "HTTP 403, status = VERIFIED",
+  "passed": true
+ },
+ {
+  "tc": "TC-44",
+  "title": "Volunteer cannot open Manage Users",
+  "action": "Volunteer opens users.php",
+  "expected": "HTTP 403",
+  "actual": "HTTP 403",
+  "passed": true
+ },
+ {
+  "tc": "TC-45",
+  "title": "Volunteer cannot open Category Totals",
+  "action": "Volunteer opens report_totals.php",
+  "expected": "HTTP 403",
+  "actual": "HTTP 403",
+  "passed": true
+ },
+ {
+  "tc": "TC-46",
+  "title": "Volunteer cannot edit another volunteer's donation (BR-08)",
+  "action": "volunteer1 opens the edit form of donation #15 (recorded by volunteer2)",
+  "expected": "HTTP 403 'Access denied'",
+  "actual": "HTTP 403 (recorded_by = 3)",
+  "passed": true
+ },
+ {
+  "tc": "TC-47",
+  "title": "Donor cannot open the staff donation list (BR-08)",
+  "action": "donor1 opens donations.php",
+  "expected": "HTTP 403",
+  "actual": "HTTP 403",
+  "passed": true
+ },
+ {
+  "tc": "TC-48",
+  "title": "Donor sees only their own donations (FR-11)",
+  "action": "donor1 opens My Donations",
+  "expected": "Only donations of donor Maria Santos: 12,2",
+  "actual": "12,2",
+  "passed": true
+ },
+ {
+  "tc": "TC-49",
+  "title": "Anonymous visitor is sent to login",
+  "action": "Open dashboard.php without logging in",
+  "expected": "Redirect to login.php",
+  "actual": "HTTP 302 -> login.php",
+  "passed": true
+ },
+ {
+  "tc": "TC-50",
+  "title": "Form without CSRF token is refused",
+  "action": "POST cancel without the hidden csrf field",
+  "expected": "HTTP 400 and no change",
+  "actual": "HTTP 400, status = VERIFIED",
+  "passed": true
+ },
+ {
+  "tc": "TC-51",
+  "title": "Output escaping (XSS)",
+  "action": "Save a donor named <script>alert(1)</script> and view the list",
+  "expected": "Shown as text, not executed",
+  "actual": "raw <script> present in HTML: False",
+  "passed": true
+ },
+ {
+  "tc": "TC-52",
+  "title": "Database CHECK constraint on quantity (BR-01)",
+  "action": "INSERT a donation with quantity 0 directly in MySQL",
+  "expected": "Rejected by CHECK chk_donations_qty",
+  "actual": "ERROR 4025 (23000) at line 1: CONSTRAINT `chk_donations_qty` failed for `donatetrack`.`donations`",
+  "passed": true
+ },
+ {
+  "tc": "TC-53",
+  "title": "Foreign key rejects an unknown donor",
+  "action": "INSERT a donation with donor_id 999",
+  "expected": "Rejected by fk_donations_donor",
+  "actual": "ERROR 1452 (23000) at line 1: Cannot add or update a child row: a foreign key constraint fails (`donatetrack`.`donations`, CONSTRAINT `fk_donations_donor` FOREIGN KEY (`donor_id`) REFERENCES `donors` (`donor_id`) ON UPDATE CASCADE)",
+  "passed": true
+ },
+ {
+  "tc": "TC-54",
+  "title": "Application account cannot write the audit table (BR-07)",
+  "action": "INSERT into distribution_audit as donatetrack_app",
+  "expected": "Denied: SELECT-only privilege",
+  "actual": "ERROR 1142 (42000) at line 1: INSERT command denied to user 'donatetrack_app'@'localhost' for table `donatetrack`.`distribution_audit`",
+  "passed": true
+ },
+ {
+  "tc": "TC-55",
+  "title": "Application account can read working tables",
+  "action": "SELECT COUNT(*) FROM donations as donatetrack_app",
+  "expected": "Succeeds",
+  "actual": "16",
+  "passed": true
+ },
+ {
+  "tc": "TC-56",
+  "title": "Foreign key RESTRICT blocks deleting a donation that has distributions (BR-06)",
+  "action": "DELETE donation #1 directly as donatetrack_app",
+  "expected": "Rejected by fk_distributions_donation (error 1451)",
+  "actual": "ERROR 1451 (23000) at line 1: Cannot delete or update a parent row: a foreign key constraint fails (`donatetrack`.`distributions`, CONSTRAINT `fk_distributions_donation` FOREIGN KEY (`donation_id`) REFERENCES `donations` (`donation_id`) ON UPDATE CASCADE)",
+  "passed": true
+ },
+ {
+  "tc": "TC-57",
+  "title": "Backup and restore (mysqldump)",
+  "action": "mysqldump the database, import into a fresh database, compare row counts",
+  "expected": "Row counts (donations, distributions, donors) are identical",
+  "actual": "original = 16,11,11; restored = 16,11,11",
+  "passed": true
+ }
+]

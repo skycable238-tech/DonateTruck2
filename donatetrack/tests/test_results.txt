@@ -1,0 +1,296 @@
+DonateTrack Phase 2 - test run 2026-11-19 14:09
+
+[PASS] TC-01 Login with a wrong password
+   Action:   POST login.php with bad password
+   Expected: Rejected with 'Invalid username or password.'
+   Actual:   Invalid username or password.
+
+[PASS] TC-02 Deactivated account cannot log in
+   Action:   Login as volunteer3 (is_active = 0)
+   Expected: Rejected: account is deactivated
+   Actual:   This account is deactivated. Contact the coordinator.
+
+[PASS] TC-03 Role-based redirect after login
+   Action:   Login as coordinator, volunteer1 and donor1
+   Expected: Staff land on the dashboard, the donor on My Donations
+   Actual:   coordinator -> dashboard.php, donor1 -> my_donations.php
+
+[PASS] TC-04 Record a donation with quantity 0 (BR-01)
+   Action:   Volunteer submits Record Donation with quantity 0
+   Expected: Rejected with 'Quantity must be greater than 0'; no row saved
+   Actual:   Quantity must be greater than 0  (rows before/after: 16/16)
+
+[PASS] TC-05 Future donation date (BR-05)
+   Action:   Record donation dated 3 days from today
+   Expected: Rejected: date cannot be in the future; no row saved
+   Actual:   Donation date cannot be in the future.
+
+[PASS] TC-06 Inactive donor (BR-02)
+   Action:   Record donation for inactive donor #9 (Pedro Villanueva)
+   Expected: Rejected with 'Donor/Category is inactive'; nothing saved
+   Actual:   Donor/Category is inactive
+
+[PASS] TC-07 Inactive category (BR-02)
+   Action:   Record donation in inactive category #7 (Medical Supplies)
+   Expected: Rejected with 'Donor/Category is inactive'; nothing saved
+   Actual:   Donor/Category is inactive
+
+[PASS] TC-08 Record a valid donation (Create)
+   Action:   Volunteer records 75.5 kg of rice from Juan dela Cruz
+   Expected: Saved with status RECORDED and recorded_by = volunteer1 (user 2)
+   Actual:   17	4	1	75.50	RECORDED	2
+   Evidence: SELECT donation_id, donor_id, category_id, quantity, status, recorded_by FROM donations WHERE donation_id=17;
+             17	4	1	75.50	RECORDED	2
+
+[PASS] TC-09 Filter donations by status
+   Action:   Open Donations with status=VERIFIED
+   Expected: Exactly the VERIFIED donations: 4,6,9,13,14
+   Actual:   4,6,9,13,14
+
+[PASS] TC-10 Search donations by donor name
+   Action:   Open Donations with q=rotary
+   Expected: Only Cebu Rotary Club donations: 1,10
+   Actual:   1,10
+
+[PASS] TC-11 Filter by category and date range
+   Action:   Open Donations with category_id=2, from=2026-11-01, to=2026-11-30
+   Expected: Canned Goods in November: 10,15
+   Actual:   10,15
+
+[PASS] TC-12 Sort by quantity (descending)
+   Action:   Open Donations with sort=quantity&dir=desc
+   Expected: Quantities appear in descending order
+   Actual:   [300.0, 200.0, 200.0, 150.0, 120.0, 120.0, 100.0, 96.0]
+
+[PASS] TC-13 Pagination
+   Action:   Open Donations page 1 and page 2 (8 per page, 17 rows)
+   Expected: Page 1 has 8 rows and page 2 has 8 rows
+   Actual:   page 1 = 8 rows, page 2 = 8 rows
+
+[PASS] TC-14 SQL injection attempt in search box
+   Action:   Search donor name for ' OR 1=1 -- 
+   Expected: Treated as plain text: no rows, no database error
+   Actual:   HTTP 200, message: 'No donations match your filters.'
+
+[PASS] TC-15 Coordinator verifies a RECORDED donation
+   Action:   POST verify for donation #17
+   Expected: Status changes RECORDED -> VERIFIED
+   Actual:   Donation #17 verified. (status = VERIFIED)
+
+[PASS] TC-16 Distribute more than the remaining quantity (BR-04)
+   Action:   Distribute 100 kg from donation #17 (75.5 kg available)
+   Expected: Rejected; remaining quantity and status unchanged
+   Actual:   Quantity exceeds the remaining amount (75.5 left). Nothing was saved.
+   before (status, remaining): VERIFIED	75.50 | after: VERIFIED	75.50
+   Evidence: SELECT status, remaining FROM donation 17 -> before: VERIFIED	75.50 / after: VERIFIED	75.50
+
+[PASS] TC-17 Distribute a negative quantity (BR-01)
+   Action:   Distribute -5 from donation #17
+   Expected: Rejected with 'Quantity must be greater than 0'
+   Actual:   Quantity must be greater than 0
+
+[PASS] TC-18 Distribution date earlier than donation date (BR-05)
+   Action:   Distribute 20 kg dated 2020-01-01
+   Expected: Rejected with a date validation message
+   Actual:   Distribution date cannot be earlier than the donation date (2026-11-19).
+
+[PASS] TC-19 Partial distribution
+   Action:   Distribute 30 of 75.5 kg
+   Expected: Distribution row saved; status VERIFIED -> PARTIAL; remaining 45.50
+   Actual:   status = PARTIAL, remaining = 45.50
+   Evidence: 10	17	Barangay Lahug	30.00
+
+[PASS] TC-20 Final distribution reaches zero
+   Action:   Distribute the remaining 45.5 kg
+   Expected: Status PARTIAL -> DISTRIBUTED; remaining 0.00
+   Actual:   status = DISTRIBUTED, remaining = 0.00
+   Evidence: 10	17	Barangay Lahug	30.00
+             11	17	Barangay Apas	45.50
+
+[PASS] TC-21 Invalid status change (BR-03)
+   Action:   Try to verify donation #17 which is already DISTRIBUTED
+   Expected: Rejected; status stays DISTRIBUTED
+   Actual:   Invalid status change: DISTRIBUTED cannot become VERIFIED. (status = DISTRIBUTED)
+
+[PASS] TC-22 Cancel requires a reason
+   Action:   Cancel donation #11 with an empty reason
+   Expected: Rejected; status stays RECORDED
+   Actual:   Enter a reason for cancelling.
+
+[PASS] TC-23 Cancel a RECORDED donation with a reason
+   Action:   Cancel donation #11 with a reason
+   Expected: Status RECORDED -> CANCELLED with the reason saved
+   Actual:   CANCELLED	Duplicate of donation #8 entry
+
+[PASS] TC-24 A PARTIAL donation cannot be cancelled (BR-03)
+   Action:   Cancel donation #2 (PARTIAL)
+   Expected: Rejected; status stays PARTIAL
+   Actual:   Invalid status change: PARTIAL cannot become CANCELLED.
+
+[PASS] TC-25 Delete a donor that has donations (BR-06)
+   Action:   Delete donor #1 (Maria Santos, 2 donations)
+   Expected: Refused by the foreign key; message offers Cancel/Deactivate; donor still exists
+   Actual:   This record is used by other records and cannot be deleted. Cancel or deactivate it instead. (donor rows: 1)
+
+[PASS] TC-26 Delete a second donor that has a donation (BR-06)
+   Action:   Delete donor #8 (Harmony Students Org, has donation #8)
+   Expected: Refused by foreign key; donor remains
+   Actual:   This record is used by other records and cannot be deleted. Cancel or deactivate it instead.
+
+[PASS] TC-27 Delete a donor with no donations
+   Action:   Delete donor #9 (Pedro Villanueva)
+   Expected: Deleted successfully
+   Actual:   Donor deleted. (rows left: 0)
+
+[PASS] TC-28 Delete a donation that has distributions
+   Action:   Delete donation #1 (DISTRIBUTED)
+   Expected: Refused (application check; the FOREIGN KEY also blocks it, see TC-56); donation remains
+   Actual:   Only RECORDED donations can be deleted. Cancel this donation instead.
+
+[PASS] TC-29 Delete a RECORDED donation (Delete)
+   Action:   Delete donation #8 (RECORDED, no distributions)
+   Expected: Row removed
+   Actual:   Donation #8 deleted. (rows left: 0)
+
+[PASS] TC-30 Duplicate donor email is rejected
+   Action:   Add two donors with email dup@example.com
+   Expected: Second save rejected: 'A donor with this email already exists.' (MySQL error 1062)
+   Actual:   A donor with this email already exists.
+
+[PASS] TC-31 Donor form validation
+   Action:   Submit empty name and invalid email
+   Expected: Both fields rejected with messages
+   Actual:   Donor name is required. Enter a valid email address.
+
+[PASS] TC-32 Edit a donor (Update)
+   Action:   Rename Test Donor A and change type to BUSINESS
+   Expected: Row updated in the database
+   Actual:   Test Donor A (edited)	BUSINESS	032-000
+
+[PASS] TC-33 Duplicate category name is rejected
+   Action:   Add category 'Rice' again
+   Expected: Rejected: 'A category with this name already exists.'
+   Actual:   A category with this name already exists.
+
+[PASS] TC-34 Add a category (Create)
+   Action:   Add 'Blankets' (pieces)
+   Expected: Row inserted
+   Actual:   Blankets	pieces	1
+
+[PASS] TC-35 Delete a category that has donations (BR-06)
+   Action:   Delete category #1 (Rice)
+   Expected: Refused by foreign key; category remains
+   Actual:   This record is used by other records and cannot be deleted. Cancel or deactivate it instead.
+
+[PASS] TC-36 User form rejects a short password
+   Action:   Create user with password 'short'
+   Expected: Rejected: at least 8 characters
+   Actual:   Password must be at least 8 characters.
+
+[PASS] TC-37 Create a user; password stored hashed
+   Action:   Create volunteer9
+   Expected: Row inserted; password_hash is a bcrypt hash, not plain text
+   Actual:   $2y$	60
+
+[PASS] TC-38 Duplicate username is rejected
+   Action:   Create volunteer9 again
+   Expected: Rejected: 'That username is already taken.'
+   Actual:   That username is already taken.
+
+[PASS] TC-39 Category totals report
+   Action:   Open Category Totals for 2026-10-01 to 2026-11-30
+   Expected: Received/Distributed/Remaining agree with a direct SQL query
+   Actual:   Canned Goods on page = ['446', '210', '236']; SQL = Canned Goods | 446.00 | 210.00
+   Evidence: Canned Goods	446.00	210.00
+
+[PASS] TC-40 Report rejects an invalid date range
+   Action:   from=2026-12-01 to=2026-11-01
+   Expected: Error message; no totals shown
+   Actual:   The "from" date cannot be later than the "to" date.
+
+[PASS] TC-41 Volunteer cannot verify a donation (BR-08)
+   Action:   Volunteer POSTs verify for RECORDED donation #15
+   Expected: HTTP 403 'Access denied' and status unchanged
+   Actual:   HTTP 403, status = RECORDED
+
+[PASS] TC-42 Volunteer cannot distribute (BR-08)
+   Action:   Volunteer POSTs distribute for VERIFIED donation #14
+   Expected: HTTP 403 and no distribution row
+   Actual:   HTTP 403
+
+[PASS] TC-43 Volunteer cannot cancel a donation (BR-08)
+   Action:   Volunteer POSTs cancel for VERIFIED donation #6
+   Expected: HTTP 403 and status unchanged
+   Actual:   HTTP 403, status = VERIFIED
+
+[PASS] TC-44 Volunteer cannot open Manage Users
+   Action:   Volunteer opens users.php
+   Expected: HTTP 403
+   Actual:   HTTP 403
+
+[PASS] TC-45 Volunteer cannot open Category Totals
+   Action:   Volunteer opens report_totals.php
+   Expected: HTTP 403
+   Actual:   HTTP 403
+
+[PASS] TC-46 Volunteer cannot edit another volunteer's donation (BR-08)
+   Action:   volunteer1 opens the edit form of donation #15 (recorded by volunteer2)
+   Expected: HTTP 403 'Access denied'
+   Actual:   HTTP 403 (recorded_by = 3)
+
+[PASS] TC-47 Donor cannot open the staff donation list (BR-08)
+   Action:   donor1 opens donations.php
+   Expected: HTTP 403
+   Actual:   HTTP 403
+
+[PASS] TC-48 Donor sees only their own donations (FR-11)
+   Action:   donor1 opens My Donations
+   Expected: Only donations of donor Maria Santos: 12,2
+   Actual:   12,2
+
+[PASS] TC-49 Anonymous visitor is sent to login
+   Action:   Open dashboard.php without logging in
+   Expected: Redirect to login.php
+   Actual:   HTTP 302 -> login.php
+
+[PASS] TC-50 Form without CSRF token is refused
+   Action:   POST cancel without the hidden csrf field
+   Expected: HTTP 400 and no change
+   Actual:   HTTP 400, status = VERIFIED
+
+[PASS] TC-51 Output escaping (XSS)
+   Action:   Save a donor named <script>alert(1)</script> and view the list
+   Expected: Shown as text, not executed
+   Actual:   raw <script> present in HTML: False
+
+[PASS] TC-52 Database CHECK constraint on quantity (BR-01)
+   Action:   INSERT a donation with quantity 0 directly in MySQL
+   Expected: Rejected by CHECK chk_donations_qty
+   Actual:   ERROR 4025 (23000) at line 1: CONSTRAINT `chk_donations_qty` failed for `donatetrack`.`donations`
+
+[PASS] TC-53 Foreign key rejects an unknown donor
+   Action:   INSERT a donation with donor_id 999
+   Expected: Rejected by fk_donations_donor
+   Actual:   ERROR 1452 (23000) at line 1: Cannot add or update a child row: a foreign key constraint fails (`donatetrack`.`donations`, CONSTRAINT `fk_donations_donor` FOREIGN KEY (`donor_id`) REFERENCES `donors` (`donor_id`) ON UPDATE CASCADE)
+
+[PASS] TC-54 Application account cannot write the audit table (BR-07)
+   Action:   INSERT into distribution_audit as donatetrack_app
+   Expected: Denied: SELECT-only privilege
+   Actual:   ERROR 1142 (42000) at line 1: INSERT command denied to user 'donatetrack_app'@'localhost' for table `donatetrack`.`distribution_audit`
+
+[PASS] TC-55 Application account can read working tables
+   Action:   SELECT COUNT(*) FROM donations as donatetrack_app
+   Expected: Succeeds
+   Actual:   16
+
+[PASS] TC-56 Foreign key RESTRICT blocks deleting a donation that has distributions (BR-06)
+   Action:   DELETE donation #1 directly as donatetrack_app
+   Expected: Rejected by fk_distributions_donation (error 1451)
+   Actual:   ERROR 1451 (23000) at line 1: Cannot delete or update a parent row: a foreign key constraint fails (`donatetrack`.`distributions`, CONSTRAINT `fk_distributions_donation` FOREIGN KEY (`donation_id`) REFERENCES `donations` (`donation_id`) ON UPDATE CASCADE)
+
+[PASS] TC-57 Backup and restore (mysqldump)
+   Action:   mysqldump the database, import into a fresh database, compare row counts
+   Expected: Row counts (donations, distributions, donors) are identical
+   Actual:   original = 16,11,11; restored = 16,11,11
+
+SUMMARY: 57 of 57 test cases passed.
